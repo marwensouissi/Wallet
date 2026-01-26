@@ -230,7 +230,7 @@ mvn clean install
 mvn spring-boot:run
 ```
 
-Application starts on `http://localhost:8080`
+Application starts on `http://localhost:8088`
 
 ## 📡 API Endpoints
 
