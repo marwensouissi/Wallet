@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.1</version>
+        <version>3.4.1</version> <!-- Updated from 3.2.5 -->
         <relativePath />
     </parent>
 
@@ -20,6 +20,8 @@
     <properties>
         <java.version>17</java.version>
         <lombok.version>1.18.34</lombok.version>
+        <!-- Override vulnerable dependencies -->
+        <tomcat.version>10.1.34</tomcat.version> <!-- Fixes Tomcat CVEs -->
     </properties>
 
     <dependencies>
