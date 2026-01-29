@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, AlertCircle } from 'lucide-react';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
+import { useAuth } from '../../hooks/useAuth';
 
 export const LoginForm = () => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
+    const { login, isLoading } = useAuth();
     const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({
@@ -16,15 +17,14 @@ export const LoginForm = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setError('');
 
-        // Simulate API call
-        setTimeout(() => {
-            setLoading(false);
-            console.log("Logged in with", formData);
-            navigate('/');
-        }, 1500);
+        try {
+            await login(formData.email, formData.password);
+            navigate('/dashboard');
+        } catch (err) {
+            setError('Invalid email or password');
+        }
     };
 
     return (
@@ -69,7 +69,7 @@ export const LoginForm = () => {
 
                 <Button
                     type="submit"
-                    isLoading={loading}
+                    isLoading={isLoading}
                     className="w-full"
                 >
                     Sign In

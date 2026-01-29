@@ -1,4 +1,4 @@
-import React, { InputHTMLAttributes, ReactNode } from 'react';
+import type { InputHTMLAttributes, ReactNode } from 'react';
 import { cn } from './Button';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -19,8 +19,8 @@ export const Input = ({ label, icon, error, className, ...props }: InputProps) =
                 <input
                     className={cn(
                         "w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all",
-                        icon && "pl-11",
-                        error && "border-red-500/50 focus:border-red-500 focus:ring-red-500",
+                        icon ? "pl-11" : "",
+                        error ? "border-red-500/50 focus:border-red-500 focus:ring-red-500" : "",
                         className
                     )}
                     {...props}

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Shield, Globe, Wallet, Zap, PieChart, Lock } from 'lucide-react';
 import { GlassCard } from '../common/GlassCard';
 

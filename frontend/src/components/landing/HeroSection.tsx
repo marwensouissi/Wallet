@@ -1,9 +1,8 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, PlayCircle } from 'lucide-react';
 import { Button } from '../common/Button';
 import { GlassCard } from '../common/GlassCard';
-import HeroImage from '../../assets/hero-dashboard.png'; // Placeholder path, we will map this
+// HeroImage removed - using placeholder instead
 
 const HeroSection = () => {
     const navigate = useNavigate();

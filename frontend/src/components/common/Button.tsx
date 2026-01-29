@@ -1,4 +1,4 @@
-import React, { ButtonHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes } from 'react';
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Loader2 } from 'lucide-react';
