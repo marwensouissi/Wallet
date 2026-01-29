@@ -1,1 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+
+@theme {
+    --font-sans: "Inter", system-ui, sans-serif;
+
+    --color-bg-dark: #0f172a;
+    /* Deep Slate */
+    --color-accent-primary: #6366f1;
+    /* Electric Indigo */
+    --color-accent-glow: rgba(99, 102, 241, 0.5);
+
+    /* Glassmorphism utilities could be custom utilities, but we'll use standard backdrop-blur */
+}
+
+@layer base {
+    body {
+        @apply bg-bg-dark text-slate-100 font-sans antialiased;
+    }
+}
+
+@utility glass {
+    @apply bg-slate-900/40 backdrop-blur-xl border border-white/10;
+}
