@@ -3,6 +3,7 @@ package com.fintech.wallet.infrastructure.adapter;
 import com.fintech.wallet.application.port.out.ExchangeRatePort;
 import com.fintech.wallet.domain.valueobject.Currency;
 import com.fintech.wallet.domain.valueobject.ExchangeRate;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Adapter for fetching exchange rates from Open Exchange Rates API.
- * Includes caching to minimize API calls.
+ * Includes caching to minimize API calls and circuit breaker for resilience.
  */
 @Component
 public class OpenExchangeRatesAdapter implements ExchangeRatePort {
@@ -44,6 +45,7 @@ public class OpenExchangeRatesAdapter implements ExchangeRatePort {
     }
 
     @Override
+    @CircuitBreaker(name = "exchangeRates", fallbackMethod = "getFallbackRateFallback")
     public Optional<ExchangeRate> getExchangeRate(Currency sourceCurrency, Currency targetCurrency) {
         if (!enabled) {
             log.debug("Exchange rate API disabled, using fallback rates");
@@ -51,7 +53,7 @@ public class OpenExchangeRatesAdapter implements ExchangeRatePort {
         }
 
         try {
-            Map<String, BigDecimal> rates = getAllRates(sourceCurrency);
+            Map<String, BigDecimal> rates = getAllRatesInternal(sourceCurrency);
             BigDecimal rate = rates.get(targetCurrency.getCode());
             
             if (rate == null) {
@@ -67,12 +69,30 @@ public class OpenExchangeRatesAdapter implements ExchangeRatePort {
             ));
         } catch (Exception e) {
             log.error("Failed to fetch exchange rate: {}", e.getMessage());
-            return getFallbackRate(sourceCurrency, targetCurrency);
+            throw e; // Re-throw to trigger circuit breaker
         }
     }
 
+    @SuppressWarnings("unused")
+    private Optional<ExchangeRate> getFallbackRateFallback(Currency sourceCurrency, 
+            Currency targetCurrency, Throwable t) {
+        log.warn("Circuit breaker triggered for exchange rate API, using fallback. Reason: {}", t.getMessage());
+        return getFallbackRate(sourceCurrency, targetCurrency);
+    }
+
     @Override
+    @CircuitBreaker(name = "exchangeRates", fallbackMethod = "getAllRatesFallback")
     public Map<String, BigDecimal> getAllRates(Currency baseCurrency) {
+        return getAllRatesInternal(baseCurrency);
+    }
+
+    @SuppressWarnings("unused")
+    private Map<String, BigDecimal> getAllRatesFallback(Currency baseCurrency, Throwable t) {
+        log.warn("Circuit breaker triggered for exchange rate API, using fallback rates. Reason: {}", t.getMessage());
+        return getFallbackRates();
+    }
+
+    private Map<String, BigDecimal> getAllRatesInternal(Currency baseCurrency) {
         String cacheKey = baseCurrency.getCode();
         CachedRates cached = ratesCache.get(cacheKey);
 
@@ -84,23 +104,19 @@ public class OpenExchangeRatesAdapter implements ExchangeRatePort {
             return getFallbackRates();
         }
 
-        try {
-            ExchangeRatesResponse response = webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                    .path("/latest.json")
-                    .queryParam("app_id", apiKey)
-                    .queryParam("base", baseCurrency.getCode())
-                    .build())
-                .retrieve()
-                .bodyToMono(ExchangeRatesResponse.class)
-                .block(Duration.ofSeconds(10));
+        ExchangeRatesResponse response = webClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path("/latest.json")
+                .queryParam("app_id", apiKey)
+                .queryParam("base", baseCurrency.getCode())
+                .build())
+            .retrieve()
+            .bodyToMono(ExchangeRatesResponse.class)
+            .block(Duration.ofSeconds(10));
 
-            if (response != null && response.rates != null) {
-                ratesCache.put(cacheKey, new CachedRates(response.rates, Instant.now()));
-                return response.rates;
-            }
-        } catch (Exception e) {
-            log.error("Failed to fetch exchange rates from API: {}", e.getMessage());
+        if (response != null && response.rates != null) {
+            ratesCache.put(cacheKey, new CachedRates(response.rates, Instant.now()));
+            return response.rates;
         }
 
         return getFallbackRates();

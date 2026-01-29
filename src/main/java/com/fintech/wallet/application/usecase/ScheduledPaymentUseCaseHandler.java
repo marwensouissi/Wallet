@@ -7,6 +7,7 @@ import com.fintech.wallet.application.port.in.TransferMoneyUseCase;
 import com.fintech.wallet.application.port.out.DomainEventPublisher;
 import com.fintech.wallet.application.port.out.LoadWalletPort;
 import com.fintech.wallet.application.port.out.ScheduledPaymentPort;
+import com.fintech.wallet.domain.exception.ScheduledPaymentNotFoundException;
 import com.fintech.wallet.domain.exception.WalletNotFoundException;
 import com.fintech.wallet.domain.model.RecurrencePattern;
 import com.fintech.wallet.domain.model.ScheduledPayment;
@@ -16,6 +17,7 @@ import com.fintech.wallet.domain.valueobject.ScheduledPaymentId;
 import com.fintech.wallet.domain.valueobject.WalletId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -24,6 +26,7 @@ import java.util.Objects;
 /**
  * Use case handler for scheduled payments.
  */
+@Transactional
 public class ScheduledPaymentUseCaseHandler implements ScheduledPaymentUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(ScheduledPaymentUseCaseHandler.class);
@@ -86,13 +89,15 @@ public class ScheduledPaymentUseCaseHandler implements ScheduledPaymentUseCase {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ScheduledPayment getScheduledPayment(String paymentId) {
         ScheduledPaymentId id = ScheduledPaymentId.of(paymentId);
         return scheduledPaymentPort.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Scheduled payment not found: " + paymentId));
+                .orElseThrow(() -> new ScheduledPaymentNotFoundException(paymentId));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ScheduledPayment> getScheduledPaymentsForWallet(String walletId) {
         WalletId id = WalletId.of(walletId);
         return scheduledPaymentPort.findBySourceWalletId(id);
@@ -102,7 +107,7 @@ public class ScheduledPaymentUseCaseHandler implements ScheduledPaymentUseCase {
     public void pauseScheduledPayment(String paymentId) {
         ScheduledPaymentId id = ScheduledPaymentId.of(paymentId);
         ScheduledPayment payment = scheduledPaymentPort.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Scheduled payment not found: " + paymentId));
+                .orElseThrow(() -> new ScheduledPaymentNotFoundException(paymentId));
 
         ScheduledPayment paused = payment.pause();
         scheduledPaymentPort.save(paused);
@@ -113,7 +118,7 @@ public class ScheduledPaymentUseCaseHandler implements ScheduledPaymentUseCase {
     public void resumeScheduledPayment(String paymentId) {
         ScheduledPaymentId id = ScheduledPaymentId.of(paymentId);
         ScheduledPayment payment = scheduledPaymentPort.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Scheduled payment not found: " + paymentId));
+                .orElseThrow(() -> new ScheduledPaymentNotFoundException(paymentId));
 
         ScheduledPayment resumed = payment.resume();
         scheduledPaymentPort.save(resumed);
@@ -124,7 +129,7 @@ public class ScheduledPaymentUseCaseHandler implements ScheduledPaymentUseCase {
     public void cancelScheduledPayment(String paymentId) {
         ScheduledPaymentId id = ScheduledPaymentId.of(paymentId);
         ScheduledPayment payment = scheduledPaymentPort.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Scheduled payment not found: " + paymentId));
+                .orElseThrow(() -> new ScheduledPaymentNotFoundException(paymentId));
 
         ScheduledPayment cancelled = payment.cancel();
         scheduledPaymentPort.save(cancelled);

@@ -2,6 +2,7 @@ package com.fintech.wallet.interfaces.rest.advice;
 
 import com.fintech.wallet.domain.exception.InsufficientBalanceException;
 import com.fintech.wallet.domain.exception.InvalidCurrencyException;
+import com.fintech.wallet.domain.exception.ScheduledPaymentNotFoundException;
 import com.fintech.wallet.domain.exception.WalletNotFoundException;
 import com.fintech.wallet.interfaces.rest.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -99,6 +100,20 @@ public class GlobalExceptionHandler {
                 .build();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(ScheduledPaymentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleScheduledPaymentNotFound(ScheduledPaymentNotFoundException ex,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .error("Scheduled Payment Not Found")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     @ExceptionHandler(Exception.class)

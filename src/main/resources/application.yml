@@ -21,6 +21,19 @@ spring:
   flyway:
     enabled: false
 
+  # Email configuration for notifications
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 server:
   port: 8088
 
@@ -51,3 +64,44 @@ logging:
   level:
     com.fintech.wallet: INFO
     org.springframework: WARN
+
+# Custom application configuration
+app:
+  # Open Exchange Rates API configuration
+  exchange-rates:
+    api-url: https://openexchangerates.org/api
+    app-id: ${EXCHANGE_RATES_APP_ID:}
+    base-currency: USD
+    cache-duration-minutes: 60
+  
+  # Webhook configuration
+  webhook:
+    timeout-seconds: 30
+    max-retries: 3
+  
+  # Scheduled payments configuration
+  scheduled-payments:
+    reminder-days-ahead: 3
+    execution-cron: "0 0 6 * * ?" # Daily at 6 AM
+    reminder-cron: "0 0 9 * * ?" # Daily at 9 AM
+
+# Resilience4j Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      exchangeRates:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 60s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slowCallRateThreshold: 100
+        slowCallDurationThreshold: 5s
+        registerHealthIndicator: true
+  retry:
+    instances:
+      exchangeRates:
+        maxAttempts: 3
+        waitDuration: 1s
+        retryExceptions:
+          - java.net.ConnectException
+          - java.util.concurrent.TimeoutException

@@ -31,6 +31,10 @@ public class WebhookAdapter implements WebhookPort {
     @Override
     @Async
     public boolean sendWebhook(String webhookUrl, String eventType, Map<String, Object> payload) {
+        return sendWebhookInternal(webhookUrl, eventType, payload);
+    }
+
+    private boolean sendWebhookInternal(String webhookUrl, String eventType, Map<String, Object> payload) {
         try {
             Map<String, Object> webhookPayload = new HashMap<>(payload);
             webhookPayload.put("eventType", eventType);
@@ -59,7 +63,7 @@ public class WebhookAdapter implements WebhookPort {
         int attempt = 0;
         while (attempt < maxRetries) {
             attempt++;
-            if (sendWebhook(webhookUrl, eventType, payload)) {
+            if (sendWebhookInternal(webhookUrl, eventType, payload)) {
                 return true;
             }
             

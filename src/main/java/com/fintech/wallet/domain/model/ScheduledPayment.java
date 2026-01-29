@@ -25,9 +25,9 @@ public final class ScheduledPayment {
     private final LocalDate nextExecutionDate;
     private final int executionCount;
     private final int maxExecutions; // 0 for unlimited
-    private ScheduledPaymentStatus status;
+    private final ScheduledPaymentStatus status;
     private final Instant createdAt;
-    private Instant lastModifiedAt;
+    private final Instant lastModifiedAt;
 
     private ScheduledPayment(Builder builder) {
         this.id = builder.id;
